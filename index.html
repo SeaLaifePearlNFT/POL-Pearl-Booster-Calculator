@@ -1,8 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Yield Optimizer – Verified Fixed Logic</title>
+  <title>Yield Optimizer – Chart Fixed</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -75,11 +77,60 @@
     <button onclick="updateOutput()">Calculate</button>
 
     <div class="result" id="output" style="display:none;"></div>
+    <canvas id="growthChart" width="400" height="200" style="margin-top:30px;"></canvas>
   </div>
 
   <script>
     const baseAPR = 0.12;
     const boosterAPR = 0.005;
+    let chartInstance = null;
+
+    function drawChart(dataPoints, breakEvenTarget) {
+      const ctx = document.getElementById('growthChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: Array.from({length: dataPoints.length}, (_, i) => i + "m"),
+          datasets: [
+            {
+              label: 'Compounded Value',
+              data: dataPoints,
+              borderColor: '#42a5f5', backgroundColor: 'rgba(66, 165, 245, 0.2)',
+              tension: 0.3,
+              borderWidth: 2,
+            },
+            {
+              label: 'Break-Even Target',
+              data: Array(dataPoints.length).fill(breakEvenTarget),
+              borderColor: '#e53935',
+              borderDash: [10, 5],
+              borderWidth: 2,
+            }
+          ]
+        },
+        options: {
+          
+    scales: {
+      x: {
+        ticks: {
+          color: '#dbdbdb',
+          font: { weight: 'bold', size: 13 }
+        }
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          color: '#dbdbdb',
+          font: { weight: 'bold', size: 13 }
+        }
+      }
+    }
+    
+        }
+      });
+    }
 
     function calculateBreakEven(principal, apr, boosterCostTotal) {
       const target = 2 * principal + boosterCostTotal;
@@ -135,9 +186,18 @@
 
       const apr = baseAPR + boosterCount * boosterAPR;
       const sunkCost = boosterCount * boosterCost;
-
-      const { optimalBoosters, minValid, maxValid } = findOptimalBoosterRange(investment, boosterCost);
+      const totalTarget = 2 * investment + sunkCost;
       const monthsToBreakEven = calculateBreakEven(investment, apr, sunkCost);
+      const { optimalBoosters, minValid, maxValid } = findOptimalBoosterRange(investment, boosterCost);
+
+      let value = investment;
+      const values = [value];
+      const monthlyRate = Math.pow(1 + apr, 1 / 12) - 1;
+      for (let i = 1; i <= 120; i++) {
+        value *= (1 + monthlyRate);
+        values.push(value);
+      }
+      drawChart(values, totalTarget);
 
       if (monthsToBreakEven === null) {
         output.innerHTML = "Break-even not reached within 100 years.";
