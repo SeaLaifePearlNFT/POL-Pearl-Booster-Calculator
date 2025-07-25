@@ -98,12 +98,12 @@ document.addEventListener("DOMContentLoaded", function () {
       const apr = baseAPR + boosters * boosterAPR;
       const totalCost = investment + boosters * boosterCost;
       const monthlyRate = Math.pow(1 + apr, 1 / 12) - 1;
-      let cumulativeGain = 0;
-      let months = 0;
-      while (cumulativeGain < totalCost && months <= 1200) {
-        const monthlyGain = investment * monthlyRate;
-        cumulativeGain += monthlyGain;
-        months++;
+      let currentValue = principal;
+let months = 0;
+
+while (currentValue < totalCost && months <= 1200) {
+  currentValue *= (1 + monthlyRate);
+  months++;
       }
       breakevens.push({ boosters, months });
 
