@@ -1,15 +1,14 @@
-
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<title>Yield Optimizer</title>
-<style>
+  <meta charset="UTF-8" />
+  <title>Yield Optimizer – Verified Fixed Logic</title>
+  <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
       background: #0d1821;
+      color: white;
     }
     .container {
       max-width: 500px;
@@ -17,7 +16,6 @@
       background: #0fa8a8;
       padding: 20px;
       border-radius: 8px;
-      color: white;
     }
     h2 {
       text-align: center;
@@ -28,13 +26,15 @@
       font-size: 14px;
       margin-bottom: 20px;
     }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
     input {
-      box-sizing: border-box;
-      max-width: 100%;
-    
       width: 100%;
       padding: 10px;
-      margin: 10px 0;
+      margin-top: 5px;
+      box-sizing: border-box;
     }
     .result {
       margin-top: 20px;
@@ -42,122 +42,122 @@
       background: #2c346b;
       border-left: 4px solid #28a745;
     }
-  
-    input[type=number]::-webkit-inner-spin-button,
-    input[type=number]::-webkit-outer-spin-button {
-      opacity: 1;
-      height: 20px;
-      width: 20px;
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 20px;
+      background: #0d1821;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 4px;
     }
-    </style>
+    button:hover {
+      background: #092331;
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-<h2>Yield Optimizer</h2>
-<div class="subtitle">Grow your holdings efficiently by adding SeaLaife Booster NFTs strategically.</div>
-<label for="netInvestment">Enter Investment POL (earning yield only):</label>
-<input id="netInvestment" min="1000" placeholder="e.g. 10000" step="10" type="number"/>
-<label for="boosterCount">Number of Boosters (max 16):</label>
-<input id="boosterCount" max="16" min="0" placeholder="e.g. 4" type="number"/>
-<label for="boosterCost">Cost per Booster (default is 256 POL):</label>
-<input id="boosterCost" min="0" placeholder="e.g. 300" type="number"/>
-<div class="result" id="output" style="display:none;"></div>
-</div>
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const baseAPR = 0.12;
-  const boosterAPR = 0.005;
-  const defaultBoosterCost = 256;
+  <div class="container">
+    <h2>Yield Optimizer</h2>
+    <div class="subtitle">Grow your holdings efficiently through monthly compounding and adding SeaLaife Booster NFTs.</div>
 
-  function calculateBreakEven(principal, apr, totalCost) {
-    const monthlyRate = Math.pow(1 + apr, 1 / 12) - 1;
-    let cumulativeGain = 0;
-    let months = 0;
+    <label for="investment">Enter Investment POL (earning yield only):</label>
+    <input id="investment" type="number" min="1000" step="10" placeholder="e.g. 10000" />
 
-    while (cumulativeGain < totalCost && months <= 1200) {
-      const monthlyGain = principal * monthlyRate;
-      cumulativeGain += monthlyGain;
-      months++;
-    }
+    <label for="boosterCount">Number of Boosters (max 16):</label>
+    <input id="boosterCount" type="number" min="0" max="16" placeholder="e.g. 4" />
 
-    if (cumulativeGain >= totalCost) {
-      const years = Math.floor(months / 12);
-      const remMonths = months % 12;
-      return `${years} years and ${remMonths} months`;
-    } else {
-      return "Never";
-    }
-  }
+    <label for="boosterCost">Cost per Booster (default is 256 POL):</label>
+    <input id="boosterCost" type="number" min="0" value="256" />
 
-  function findOptimalBoosterRange(investment, boosterCost) {
-    let bestMonths = Infinity;
-    let optimalBoosters = 0;
-    const breakevens = [];
+    <button onclick="updateOutput()">Calculate</button>
 
-    for (let boosters = 0; boosters <= 16; boosters++) {
-      const apr = baseAPR + boosters * boosterAPR;
-      const totalCost = investment + boosters * boosterCost;
+    <div class="result" id="output" style="display:none;"></div>
+  </div>
+
+  <script>
+    const baseAPR = 0.12;
+    const boosterAPR = 0.005;
+
+    function calculateBreakEven(principal, apr, boosterCostTotal) {
+      const target = 2 * principal + boosterCostTotal;
       const monthlyRate = Math.pow(1 + apr, 1 / 12) - 1;
-      let currentValue = principal;
-let months = 0;
+      let value = principal;
+      let months = 0;
 
-while (currentValue < totalCost && months <= 1200) {
-  currentValue *= (1 + monthlyRate);
-  months++;
+      while (value < target && months <= 1200) {
+        value *= (1 + monthlyRate);
+        months++;
       }
-      breakevens.push({ boosters, months });
 
-      if (months < bestMonths) {
-        bestMonths = months;
-        optimalBoosters = boosters;
-      }
+      return months <= 1200 ? months : null;
     }
 
-    const threshold = 1.02; // Allow 2% margin
-    const optimalMonths = breakevens[optimalBoosters].months;
-    const validRange = breakevens
-      .filter(entry => entry.months <= optimalMonths * threshold)
-      .map(entry => entry.boosters);
+    function findOptimalBoosterRange(investment, boosterCost) {
+      let bestMonths = Infinity;
+      let optimalBoosters = 0;
+      const breakevens = [];
 
-    const minValid = Math.min(...validRange);
-    const maxValid = Math.max(...validRange);
+      for (let boosters = 0; boosters <= 16; boosters++) {
+        const apr = baseAPR + boosters * boosterAPR;
+        const sunkCost = boosters * boosterCost;
+        const months = calculateBreakEven(investment, apr, sunkCost);
+        breakevens.push({ boosters, months });
 
-    return { optimalBoosters, minValid, maxValid };
-  }
+        if (months !== null && months < bestMonths) {
+          bestMonths = months;
+          optimalBoosters = boosters;
+        }
+      }
 
-  function updateOutput() {
-    const investment = parseFloat(document.getElementById("netInvestment").value);
-    const boosterCount = parseInt(document.getElementById("boosterCount").value) || 0;
-    const boosterCost = parseFloat(document.getElementById("boosterCost").value) || defaultBoosterCost;
-    const output = document.getElementById("output");
+      const validRange = breakevens
+        .filter(entry => entry.months !== null && entry.months <= bestMonths * 1.02)
+        .map(entry => entry.boosters);
 
-    if (!investment || investment < 1000 || boosterCount < 0 || boosterCount > 16) {
-      output.style.display = "none";
-      return;
+      const minValid = Math.min(...validRange);
+      const maxValid = Math.max(...validRange);
+
+      return { optimalBoosters, minValid, maxValid };
     }
 
-    const apr = baseAPR + boosterCount * boosterAPR;
-    const sunkCost = boosterCount * boosterCost;
-    const totalCost = investment + sunkCost;
+    function updateOutput() {
+      const investment = parseFloat(document.getElementById("investment").value);
+      const boosterCount = parseInt(document.getElementById("boosterCount").value) || 0;
+      const boosterCost = parseFloat(document.getElementById("boosterCost").value) || 256;
+      const output = document.getElementById("output");
 
-    const { optimalBoosters, minValid, maxValid } = findOptimalBoosterRange(investment, boosterCost);
-    const breakeven = calculateBreakEven(investment, apr, totalCost);
+      if (!investment || investment < 1000 || boosterCount < 0 || boosterCount > 16) {
+        output.style.display = "none";
+        return;
+      }
 
-    output.innerHTML = `
-      <strong>Investment Amount (Yield-Earning):</strong> ${investment.toLocaleString()} POL<br>
-      <strong>Boosters Added:</strong> ${boosterCount} <span style="color: #cceeff;">(Recommended: ${optimalBoosters}, Range: ${minValid}-${maxValid})</span><br>
-      <strong>Sunk Cost from Boosters:</strong> ${sunkCost.toLocaleString()} POL<br>
-      <strong>Effective APR:</strong> ${(apr * 100).toFixed(2)}%<br>
-      <strong>Break-Even:</strong> ${breakeven}
-    `;
-    output.style.display = "block";
-  }
+      const apr = baseAPR + boosterCount * boosterAPR;
+      const sunkCost = boosterCount * boosterCost;
 
-  ["netInvestment", "boosterCount", "boosterCost"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener("input", updateOutput);
-  });
-});
-</script>
+      const { optimalBoosters, minValid, maxValid } = findOptimalBoosterRange(investment, boosterCost);
+      const monthsToBreakEven = calculateBreakEven(investment, apr, sunkCost);
+
+      if (monthsToBreakEven === null) {
+        output.innerHTML = "Break-even not reached within 100 years.";
+        output.style.display = "block";
+        return;
+      }
+
+      const years = Math.floor(monthsToBreakEven / 12);
+      const remMonths = monthsToBreakEven % 12;
+
+      output.innerHTML = `
+        <strong>Investment Amount (Yield-Earning):</strong> ${investment.toLocaleString()} POL<br>
+        <strong>Boosters Added:</strong> ${boosterCount} <span style="color: #cceeff;">(Recommended: ${optimalBoosters}, Range: ${minValid}-${maxValid})</span><br>
+        <strong>Sunk Cost from Boosters:</strong> ${sunkCost.toLocaleString()} POL<br>
+        <strong>Effective APR:</strong> ${(apr * 100).toFixed(2)}%<br>
+        <strong>Break-Even:</strong> ${years} years and ${remMonths} months
+      `;
+      output.style.display = "block";
+    }
+  </script>
 </body>
 </html>
+
