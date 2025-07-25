@@ -1,0 +1,120 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Yield Optimizer - Booster</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: #0fa8a8;
+      padding: 20px;
+      border-radius: 8px;
+      color: white;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #2c346b;
+      border-left: 4px solid #28a745;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Yield Optimizer - Booster</h2>
+    <div class="subtitle">Find the perfect balance for your investment by adding SeaLaife Booster NFTs and monthly compounding.</div>
+
+    <label for="netInvestment">Enter Investment POL (earning yield only):</label>
+    <input type="number" id="netInvestment" placeholder="e.g. 10000" min="1000" step="10">
+
+    <label for="boosterCount">Number of Boosters (max 16):</label>
+    <input type="number" id="boosterCount" placeholder="e.g. 4" min="0" max="16">
+
+    <label for="boosterCost">Cost per Booster (default is 256 POL):</label>
+    <input type="number" id="boosterCost" placeholder="e.g. 300" min="0">
+
+    <div class="result" id="output" style="display:none;"></div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const baseAPR = 0.12;
+      const boosterAPR = 0.005;
+      const defaultBoosterCost = 256;
+
+      function calculateBreakEven(principal, apr, totalCost) {
+        const monthlyRate = Math.pow(1 + apr, 1 / 12) - 1;
+        let cumulativeGain = 0;
+        let months = 0;
+
+        while (cumulativeGain < totalCost && months <= 1200) {
+          const monthlyGain = principal * monthlyRate;
+          cumulativeGain += monthlyGain;
+          months++;
+        }
+
+        if (cumulativeGain >= totalCost) {
+          const years = Math.floor(months / 12);
+          const remMonths = months % 12;
+          return `${years} years and ${remMonths} months`;
+        } else {
+          return "Never";
+        }
+      }
+
+      function updateOutput() {
+        const investment = parseFloat(document.getElementById("netInvestment").value);
+        const boosterCount = parseInt(document.getElementById("boosterCount").value) || 0;
+        const boosterCost = parseFloat(document.getElementById("boosterCost").value) || defaultBoosterCost;
+        const output = document.getElementById("output");
+
+        if (!investment || investment < 1000 || boosterCount < 0 || boosterCount > 16) {
+          output.style.display = "none";
+          return;
+        }
+
+        const apr = baseAPR + boosterCount * boosterAPR;
+        const sunkCost = boosterCount * boosterCost;
+        const totalCost = investment + sunkCost;
+
+        const breakeven = calculateBreakEven(investment, apr, totalCost);
+
+        output.innerHTML = `
+          <strong>Investment Amount (Yield-Earning):</strong> ${investment.toLocaleString()} POL<br>
+          <strong>Boosters Added:</strong> ${boosterCount}<br>
+          <strong>Sunk Cost from Boosters:</strong> ${sunkCost.toLocaleString()} POL<br>
+          <strong>Effective APR:</strong> ${(apr * 100).toFixed(2)}%<br>
+          <strong>Break-Even:</strong> ${breakeven}
+        `;
+        output.style.display = "block";
+      }
+
+      ["netInvestment", "boosterCount", "boosterCost"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("input", updateOutput);
+      });
+    });
+  </script>
+</body>
+</html>
