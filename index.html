@@ -1,11 +1,12 @@
 
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Yield Optimizer – Chart Fixed</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
+<meta charset="utf-8"/>
+<title>Yield Optimizer – Chart Fixed</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
@@ -61,26 +62,27 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Yield Optimizer</h2>
-    <div class="subtitle">Grow your holdings efficiently through monthly compounding and adding SeaLaife Booster NFTs.</div>
+<div class="container">
+<h2>Yield Optimizer</h2>
+<div class="subtitle">Grow your holdings efficiently through monthly compounding and adding SeaLaife Booster NFTs.</div>
+<div>
+<label for="investmentPOL">Enter Investment (POL):</label>
+<input id="investmentPOL" type="number" value="1000"/><br/><br/>
+<label for="investmentETH">Enter Investment (ETH):</label>
+<input id="investmentETH" type="number" value="0"/>
+<span id="ethToPolLabel" style="color: #aaa; font-size: 13px; margin-left: 10px;"></span><br/><br/>
 
-    <label for="investment">Enter Investment POL (earning yield only):</label>
-    <input id="investment" type="number" min="1000" step="10" placeholder="e.g. 10000" />
+</div><label for="investment">Enter Investment POL (earning yield only):</label>
 
-    <label for="boosterCount">Number of Boosters (max 16):</label>
-    <input id="boosterCount" type="number" min="0" max="16" placeholder="e.g. 4" />
-
-    <label for="boosterCost">Cost per Booster (default is 256 POL):</label>
-    <input id="boosterCost" type="number" min="0" value="256" />
-
-    <button onclick="updateOutput()">Calculate</button>
-
-    <div class="result" id="output" style="display:none;"></div>
-    <canvas id="growthChart" width="400" height="200" style="margin-top:30px;"></canvas>
-  </div>
-
-  <script>
+<label for="boosterCount">Number of Boosters (max 16):</label>
+<input id="boosterCount" max="16" min="0" placeholder="e.g. 4" type="number"/>
+<label for="boosterCost">Cost per Booster (default is 256 POL):</label>
+<input id="boosterCost" min="0" type="number" value="256"/>
+<button onclick="updateOutput()">Calculate</button>
+<div class="result" id="output" style="display:none;"></div>
+<canvas height="200" id="growthChart" style="margin-top:30px;" width="400"></canvas>
+</div>
+<script>
     const baseAPR = 0.12;
     const boosterAPR = 0.005;
     let chartInstance = null;
@@ -173,8 +175,21 @@
       return { optimalBoosters, minValid, maxValid };
     }
 
-    function updateOutput() {
-      const investment = parseFloat(document.getElementById("investment").value);
+    
+function updateOutput() {
+  const investmentPOL = parseFloat(document.getElementById("investmentPOL").value) || 0;
+  const investmentETH = parseFloat(document.getElementById("investmentETH").value) || 0;
+  const ethToPolLabel = document.getElementById("ethToPolLabel");
+
+  // Fetch conversion rate from backend
+  fetch(`https://pol-rate-proxy.onrender.com/convert?eth=${investmentETH}`)
+    .then(response => response.json())
+    .then(data => {
+      const ethInPol = data.pol || 0;
+      const investment = investmentPOL + ethInPol;
+
+      ethToPolLabel.innerText = `(≈ ${ethInPol.toFixed(2)} POL)`;
+
       const boosterCount = parseInt(document.getElementById("boosterCount").value) || 0;
       const boosterCost = parseFloat(document.getElementById("boosterCost").value) || 256;
       const output = document.getElementById("output");
@@ -216,8 +231,14 @@
         <strong>Break-Even:</strong> ${years} years and ${remMonths} months
       `;
       output.style.display = "block";
-    }
+    })
+    .catch(error => {
+      console.error("Conversion fetch failed", error);
+      ethToPolLabel.innerText = "(conversion failed)";
+      document.getElementById("output").style.display = "none";
+    });
+}
+
   </script>
 </body>
 </html>
-
